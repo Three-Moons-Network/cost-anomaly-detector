@@ -33,6 +33,7 @@ table = dynamodb.Table(DYNAMODB_TABLE)
 # Query helpers
 # ---------------------------------------------------------------------------
 
+
 def get_cost_snapshots(days: int = 30) -> list[dict[str, Any]]:
     """Retrieve cost snapshots for the last N days."""
     try:
@@ -46,12 +47,14 @@ def get_cost_snapshots(days: int = 30) -> list[dict[str, Any]]:
                 ExpressionAttributeValues={":pk": f"snapshot#{date_str}"},
             )
             for item in response.get("Items", []):
-                snapshots.append({
-                    "date": item.get("date"),
-                    "total_cost": item.get("total_cost", 0.0),
-                    "by_service": item.get("by_service", {}),
-                    "timestamp": item.get("timestamp"),
-                })
+                snapshots.append(
+                    {
+                        "date": item.get("date"),
+                        "total_cost": item.get("total_cost", 0.0),
+                        "by_service": item.get("by_service", {}),
+                        "timestamp": item.get("timestamp"),
+                    }
+                )
         return sorted(snapshots, key=lambda x: x["date"])
     except Exception as exc:
         logger.error(f"Failed to query snapshots: {exc}")
@@ -70,12 +73,14 @@ def get_baseline_metrics(days: int = 30) -> dict[str, Any]:
                 ExpressionAttributeValues={":pk": f"baseline#{date_str}"},
             )
             for item in response.get("Items", []):
-                baselines.append({
-                    "date": item.get("date"),
-                    "average": item.get("average", 0.0),
-                    "min": item.get("min", 0.0),
-                    "max": item.get("max", 0.0),
-                })
+                baselines.append(
+                    {
+                        "date": item.get("date"),
+                        "average": item.get("average", 0.0),
+                        "min": item.get("min", 0.0),
+                        "max": item.get("max", 0.0),
+                    }
+                )
         return {
             "period_days": len(baselines),
             "data": sorted(baselines, key=lambda x: x["date"]),
@@ -110,6 +115,7 @@ def calculate_trend(snapshots: list[dict[str, Any]]) -> dict[str, float]:
 # ---------------------------------------------------------------------------
 # Lambda entry point
 # ---------------------------------------------------------------------------
+
 
 def lambda_handler(event: dict, context: Any) -> dict:
     """

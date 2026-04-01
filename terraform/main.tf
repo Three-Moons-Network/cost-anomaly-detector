@@ -257,7 +257,7 @@ data "aws_iam_policy_document" "analyzer_permissions" {
 
   # Cost Explorer API
   statement {
-    actions = ["ce:GetCostAndUsage"]
+    actions   = ["ce:GetCostAndUsage"]
     resources = ["*"]
   }
 
@@ -273,7 +273,7 @@ data "aws_iam_policy_document" "analyzer_permissions" {
 
   # SNS — send alerts
   statement {
-    actions = ["sns:Publish"]
+    actions   = ["sns:Publish"]
     resources = [aws_sns_topic.alerts.arn]
   }
 }
@@ -348,14 +348,14 @@ resource "aws_lambda_function" "analyzer" {
 
   environment {
     variables = {
-      ENVIRONMENT               = var.environment
-      DYNAMODB_TABLE            = aws_dynamodb_table.costs.name
-      SNS_TOPIC_ARN             = aws_sns_topic.alerts.arn
-      ANTHROPIC_MODEL           = var.anthropic_model
-      ANTHROPIC_API_KEY         = var.anthropic_api_key
-      ANOMALY_THRESHOLD_PCT     = tostring(var.anomaly_threshold_pct)
-      BASELINE_DAYS             = tostring(var.baseline_days)
-      LOG_LEVEL                 = var.environment == "prod" ? "WARNING" : "INFO"
+      ENVIRONMENT           = var.environment
+      DYNAMODB_TABLE        = aws_dynamodb_table.costs.name
+      SNS_TOPIC_ARN         = aws_sns_topic.alerts.arn
+      ANTHROPIC_MODEL       = var.anthropic_model
+      ANTHROPIC_API_KEY     = var.anthropic_api_key
+      ANOMALY_THRESHOLD_PCT = tostring(var.anomaly_threshold_pct)
+      BASELINE_DAYS         = tostring(var.baseline_days)
+      LOG_LEVEL             = var.environment == "prod" ? "WARNING" : "INFO"
     }
   }
 

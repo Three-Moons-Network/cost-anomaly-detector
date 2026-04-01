@@ -48,9 +48,11 @@ table = dynamodb.Table(DYNAMODB_TABLE)
 # Data classes
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class CostData:
     """Daily cost breakdown by service."""
+
     date: str
     total_cost: float
     by_service: dict[str, float]
@@ -60,6 +62,7 @@ class CostData:
 @dataclass
 class AnalysisResult:
     """Result of cost analysis and Claude interpretation."""
+
     analysis_date: str
     current_total: float
     baseline_avg: float
@@ -73,13 +76,16 @@ class AnalysisResult:
 # Cost Explorer interaction
 # ---------------------------------------------------------------------------
 
+
 def fetch_daily_costs(days_back: int = 1) -> CostData:
     """
     Fetch daily cost data from Cost Explorer API, aggregated by service.
     Returns data for the most recent N days.
     """
     end_date = (datetime.utcnow() - timedelta(days=1)).strftime("%Y-%m-%d")
-    start_date = (datetime.utcnow() - timedelta(days=days_back + 1)).strftime("%Y-%m-%d")
+    start_date = (datetime.utcnow() - timedelta(days=days_back + 1)).strftime(
+        "%Y-%m-%d"
+    )
 
     try:
         response = ce_client.get_cost_and_usage(
@@ -109,7 +115,10 @@ def fetch_daily_costs(days_back: int = 1) -> CostData:
     return CostData(
         date=end_date,
         total_cost=total_cost,
-        by_service={k: v for k, v in sorted(by_service.items(), key=lambda x: x[1], reverse=True)},
+        by_service={
+            k: v
+            for k, v in sorted(by_service.items(), key=lambda x: x[1], reverse=True)
+        },
         timestamp=int(time.time()),
     )
 
@@ -117,6 +126,7 @@ def fetch_daily_costs(days_back: int = 1) -> CostData:
 # ---------------------------------------------------------------------------
 # DynamoDB baseline and snapshot storage
 # ---------------------------------------------------------------------------
+
 
 def store_cost_snapshot(cost_data: CostData) -> None:
     """Store daily cost snapshot in DynamoDB for trend analysis."""
@@ -132,7 +142,9 @@ def store_cost_snapshot(cost_data: CostData) -> None:
                 "ttl": int(time.time()) + (90 * 86400),  # 90 day retention
             }
         )
-        logger.info(f"Stored cost snapshot for {cost_data.date}: ${cost_data.total_cost:.2f}")
+        logger.info(
+            f"Stored cost snapshot for {cost_data.date}: ${cost_data.total_cost:.2f}"
+        )
     except Exception as exc:
         logger.error(f"Failed to store snapshot: {exc}")
         raise
@@ -144,15 +156,23 @@ def get_historical_costs(days: int = 30) -> list[float]:
         # Query for all snapshots from the last N days
         response = table.query(
             KeyConditionExpression="pk = :pk",
-            ExpressionAttributeValues={":pk": f"snapshot#{(datetime.utcnow() - timedelta(days=days)).strftime('%Y-%m-%d')}"},
+            ExpressionAttributeValues={
+                ":pk": f"snapshot#{(datetime.utcnow() - timedelta(days=days)).strftime('%Y-%m-%d')}"
+            },
         )
 
         # In production, this would scan/query more smartly; for MVP, we fetch snapshots directly
         # This is a simplified approach — in real usage, you'd store rolling-window baseline
-        costs = [float(item["total_cost"]) for item in response.get("Items", []) if "total_cost" in item]
+        costs = [
+            float(item["total_cost"])
+            for item in response.get("Items", [])
+            if "total_cost" in item
+        ]
         return sorted(costs) if costs else [0.0]
     except Exception as exc:
-        logger.warning(f"Failed to retrieve historical costs: {exc}. Using empty baseline.")
+        logger.warning(
+            f"Failed to retrieve historical costs: {exc}. Using empty baseline."
+        )
         return []
 
 
@@ -193,6 +213,7 @@ def store_baseline(date: str, baseline: dict[str, float]) -> None:
 # Claude analysis
 # ---------------------------------------------------------------------------
 
+
 def analyze_with_claude(
     cost_data: CostData,
     baseline: dict[str, float],
@@ -202,7 +223,10 @@ def analyze_with_claude(
     client = anthropic.Anthropic()
 
     service_details = "\n".join(
-        [f"  - {service}: ${cost:.2f}" for service, cost in list(cost_data.by_service.items())[:10]]
+        [
+            f"  - {service}: ${cost:.2f}"
+            for service, cost in list(cost_data.by_service.items())[:10]
+        ]
     )
 
     system_prompt = (
@@ -214,7 +238,7 @@ def analyze_with_claude(
     user_message = f"""
 Cost Data for {cost_data.date}:
 - Total cost: ${cost_data.total_cost:.2f}
-- Baseline (30-day avg): ${baseline.get('average', 0.0):.2f}
+- Baseline (30-day avg): ${baseline.get("average", 0.0):.2f}
 - Variance: {variance_pct:.1f}%
 
 Top Services:
@@ -239,6 +263,7 @@ Provide:
 # ---------------------------------------------------------------------------
 # SNS alerting
 # ---------------------------------------------------------------------------
+
 
 def send_alert(analysis: AnalysisResult) -> None:
     """Send cost anomaly alert via SNS."""
@@ -269,7 +294,9 @@ Three Moons Network
             Subject=subject,
             Message=message,
         )
-        logger.info(f"Sent alert for {analysis.analysis_date} (variance: {analysis.variance_pct:.1f}%)")
+        logger.info(
+            f"Sent alert for {analysis.analysis_date} (variance: {analysis.variance_pct:.1f}%)"
+        )
     except Exception as exc:
         logger.error(f"Failed to send alert: {exc}")
 
@@ -277,6 +304,7 @@ Three Moons Network
 # ---------------------------------------------------------------------------
 # Lambda entry point
 # ---------------------------------------------------------------------------
+
 
 def lambda_handler(event: dict, context: Any) -> dict:
     """
@@ -302,7 +330,11 @@ def lambda_handler(event: dict, context: Any) -> dict:
         store_baseline(cost_data.date, baseline)
 
         baseline_avg = baseline.get("average", 0.0)
-        variance_pct = ((cost_data.total_cost - baseline_avg) / baseline_avg * 100) if baseline_avg > 0 else 0
+        variance_pct = (
+            ((cost_data.total_cost - baseline_avg) / baseline_avg * 100)
+            if baseline_avg > 0
+            else 0
+        )
 
         is_anomaly = variance_pct > ANOMALY_THRESHOLD_PCT
 
@@ -322,7 +354,9 @@ def lambda_handler(event: dict, context: Any) -> dict:
             is_anomaly=is_anomaly,
             analysis_text=analysis_text,
             services_summary={
-                "top_service": next(iter(cost_data.by_service.items())) if cost_data.by_service else None,
+                "top_service": next(iter(cost_data.by_service.items()))
+                if cost_data.by_service
+                else None,
                 "total_services": len(cost_data.by_service),
             },
         )

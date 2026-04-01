@@ -7,7 +7,6 @@ Uses mocking for AWS and Anthropic APIs.
 from __future__ import annotations
 
 import json
-from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -24,6 +23,7 @@ from src.analyzer import (
 # ---------------------------------------------------------------------------
 # CostData and helpers
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def sample_cost_data() -> CostData:
@@ -55,6 +55,7 @@ def sample_baseline() -> dict:
 # ---------------------------------------------------------------------------
 # fetch_daily_costs
 # ---------------------------------------------------------------------------
+
 
 class TestFetchDailyCosts:
     @patch("src.analyzer.ce_client")
@@ -94,6 +95,7 @@ class TestFetchDailyCosts:
 # calculate_baseline
 # ---------------------------------------------------------------------------
 
+
 class TestCalculateBaseline:
     @patch("src.analyzer.get_historical_costs")
     def test_baseline_with_data(self, mock_hist):
@@ -116,9 +118,12 @@ class TestCalculateBaseline:
 # analyze_with_claude
 # ---------------------------------------------------------------------------
 
+
 class TestAnalyzeWithClaude:
     @patch("src.analyzer.anthropic.Anthropic")
-    def test_analysis_succeeds(self, mock_anthropic_cls, sample_cost_data, sample_baseline):
+    def test_analysis_succeeds(
+        self, mock_anthropic_cls, sample_cost_data, sample_baseline
+    ):
         """Successful Claude analysis."""
         mock_client = MagicMock()
         mock_response = MagicMock()
@@ -126,7 +131,9 @@ class TestAnalyzeWithClaude:
         mock_client.messages.create.return_value = mock_response
         mock_anthropic_cls.return_value = mock_client
 
-        result = analyze_with_claude(sample_cost_data, sample_baseline, variance_pct=23.5)
+        result = analyze_with_claude(
+            sample_cost_data, sample_baseline, variance_pct=23.5
+        )
         assert "Analysis of cost spike" in result
         assert mock_client.messages.create.called
 
@@ -134,6 +141,7 @@ class TestAnalyzeWithClaude:
 # ---------------------------------------------------------------------------
 # lambda_handler (integration)
 # ---------------------------------------------------------------------------
+
 
 class TestLambdaHandler:
     @patch("src.analyzer.send_alert")

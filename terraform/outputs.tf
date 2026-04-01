@@ -20,7 +20,7 @@ output "query_function_name" {
 
 output "api_endpoint" {
   description = "Base URL for the cost query API"
-  value       = "${aws_apigatewayv2_api.main.api_endpoint}"
+  value       = aws_apigatewayv2_api.main.api_endpoint
 }
 
 output "query_url" {
