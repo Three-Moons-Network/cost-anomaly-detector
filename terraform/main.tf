@@ -159,7 +159,7 @@ resource "aws_ssm_parameter" "anomaly_threshold" {
 # ---------------------------------------------------------------------------
 
 resource "aws_dynamodb_table" "costs" {
-  name           = local.prefix
+  table_name     = local.prefix
   billing_mode   = var.dynamodb_billing_mode
   hash_key       = "pk"
   range_key      = "sk"
@@ -349,7 +349,7 @@ resource "aws_lambda_function" "analyzer" {
   environment {
     variables = {
       ENVIRONMENT           = var.environment
-      DYNAMODB_TABLE        = aws_dynamodb_table.costs.name
+      DYNAMODB_TABLE        = aws_dynamodb_table.costs.table_name
       SNS_TOPIC_ARN         = aws_sns_topic.alerts.arn
       ANTHROPIC_MODEL       = var.anthropic_model
       ANTHROPIC_API_KEY     = var.anthropic_api_key
@@ -380,7 +380,7 @@ resource "aws_lambda_function" "query" {
   environment {
     variables = {
       ENVIRONMENT    = var.environment
-      DYNAMODB_TABLE = aws_dynamodb_table.costs.name
+      DYNAMODB_TABLE = aws_dynamodb_table.costs.table_name
       LOG_LEVEL      = var.environment == "prod" ? "WARNING" : "INFO"
     }
   }
@@ -546,6 +546,6 @@ resource "aws_cloudwatch_metric_alarm" "dynamodb_throttle" {
   treat_missing_data  = "notBreaching"
 
   dimensions = {
-    TableName = aws_dynamodb_table.costs.name
+    TableName = aws_dynamodb_table.costs.table_name
   }
 }

@@ -30,7 +30,7 @@ output "query_url" {
 
 output "dynamodb_table_name" {
   description = "Name of the DynamoDB table storing cost data"
-  value       = aws_dynamodb_table.costs.name
+  value       = aws_dynamodb_table.costs.table_name
 }
 
 output "sns_topic_arn" {
