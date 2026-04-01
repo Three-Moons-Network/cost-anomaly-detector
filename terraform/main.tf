@@ -344,7 +344,7 @@ resource "aws_lambda_function" "analyzer" {
   role          = aws_iam_role.analyzer.arn
 
   filename         = "${path.module}/../dist/analyzer.zip"
-  source_code_hash = filebase64sha256("${path.module}/../dist/analyzer.zip")
+  source_code_hash = fileexists("${path.module}/../dist/analyzer.zip") ? filebase64sha256("${path.module}/../dist/analyzer.zip") : null
 
   environment {
     variables = {
@@ -375,7 +375,7 @@ resource "aws_lambda_function" "query" {
   role          = aws_iam_role.query.arn
 
   filename         = "${path.module}/../dist/query.zip"
-  source_code_hash = filebase64sha256("${path.module}/../dist/query.zip")
+  source_code_hash = fileexists("${path.module}/../dist/query.zip") ? filebase64sha256("${path.module}/../dist/query.zip") : null
 
   environment {
     variables = {
