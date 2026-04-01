@@ -159,7 +159,7 @@ resource "aws_ssm_parameter" "anomaly_threshold" {
 # ---------------------------------------------------------------------------
 
 resource "aws_dynamodb_table" "costs" {
-  table_name     = local.prefix
+  name           = local.prefix
   billing_mode   = var.dynamodb_billing_mode
   hash_key       = "pk"
   range_key      = "sk"
@@ -204,11 +204,11 @@ resource "aws_sns_topic" "alerts" {
 }
 
 resource "aws_sns_topic_subscription" "alert_email" {
-  count           = var.alert_email != "" ? 1 : 0
-  topic_arn       = aws_sns_topic.alerts.arn
-  protocol        = "email"
-  endpoint        = var.alert_email
-  filter_policies = jsonencode({})
+  count         = var.alert_email != "" ? 1 : 0
+  topic_arn     = aws_sns_topic.alerts.arn
+  protocol      = "email"
+  endpoint      = var.alert_email
+  filter_policy = jsonencode({})
 }
 
 # ---------------------------------------------------------------------------
@@ -349,7 +349,7 @@ resource "aws_lambda_function" "analyzer" {
   environment {
     variables = {
       ENVIRONMENT           = var.environment
-      DYNAMODB_TABLE        = aws_dynamodb_table.costs.table_name
+      DYNAMODB_TABLE        = aws_dynamodb_table.costs.name
       SNS_TOPIC_ARN         = aws_sns_topic.alerts.arn
       ANTHROPIC_MODEL       = var.anthropic_model
       ANTHROPIC_API_KEY     = var.anthropic_api_key
@@ -380,7 +380,7 @@ resource "aws_lambda_function" "query" {
   environment {
     variables = {
       ENVIRONMENT    = var.environment
-      DYNAMODB_TABLE = aws_dynamodb_table.costs.table_name
+      DYNAMODB_TABLE = aws_dynamodb_table.costs.name
       LOG_LEVEL      = var.environment == "prod" ? "WARNING" : "INFO"
     }
   }
@@ -399,7 +399,7 @@ resource "aws_cloudwatch_event_rule" "daily_analysis" {
   name                = "${local.prefix}-daily-analysis"
   description         = "Trigger cost analysis daily at 8 AM UTC"
   schedule_expression = "cron(0 8 * * ? *)"
-  is_enabled          = true
+  state               = "ENABLED"
 }
 
 resource "aws_cloudwatch_event_target" "analyzer_lambda" {
@@ -546,6 +546,6 @@ resource "aws_cloudwatch_metric_alarm" "dynamodb_throttle" {
   treat_missing_data  = "notBreaching"
 
   dimensions = {
-    TableName = aws_dynamodb_table.costs.table_name
+    TableName = aws_dynamodb_table.costs.name
   }
 }
