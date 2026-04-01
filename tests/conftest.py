@@ -8,6 +8,23 @@ Uses mock_aws for moto >= 5.0.
 from __future__ import annotations
 
 import os
+import sys
+
+# Add repo root to sys.path so src imports work
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+
+# Set AWS env vars at module level (before fixtures)
+os.environ.setdefault("AWS_DEFAULT_REGION", "us-east-1")
+os.environ.setdefault("AWS_ACCESS_KEY_ID", "testing")
+os.environ.setdefault("AWS_SECRET_ACCESS_KEY", "testing")
+os.environ.setdefault("AWS_SECURITY_TOKEN", "testing")
+os.environ.setdefault("AWS_SESSION_TOKEN", "testing")
+os.environ.setdefault("DYNAMODB_TABLE", "cost-anomaly-detector")
+os.environ.setdefault(
+    "SNS_TOPIC_ARN", "arn:aws:sns:us-east-1:123456789012:cost-anomaly-alerts"
+)
+os.environ.setdefault("ANTHROPIC_MODEL", "claude-sonnet-4-20250514")
+os.environ.setdefault("LOG_LEVEL", "INFO")
 
 import boto3
 import pytest
