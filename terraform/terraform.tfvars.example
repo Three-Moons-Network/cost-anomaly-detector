@@ -1,0 +1,13 @@
+aws_region           = "us-east-1"
+aws_profile          = "default"
+project_name         = "cost-anomaly-detector"
+environment          = "dev"
+anthropic_api_key    = "sk-ant-..."
+anthropic_model      = "claude-sonnet-4-20250514"
+anomaly_threshold_pct = 20
+baseline_days         = 30
+alert_email           = "alerts@example.com"
+lambda_memory         = 256
+lambda_timeout        = 60
+log_retention_days    = 30
+dynamodb_billing_mode = "PAY_PER_REQUEST"
